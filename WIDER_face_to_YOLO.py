@@ -74,7 +74,6 @@ if __name__ == "__main__":
     val_annotations = load_bbx(os.path.join(ann_folder, ann_val_file_name))
     test_list_file = os.path.join(ann_folder, "wider_face_test_filelist.txt")
 
-
     train_keys = []
     val_keys = []
     for key in train_annotations.keys():
@@ -93,5 +92,5 @@ if __name__ == "__main__":
         lines = file.readlines()
         for i, line in enumerate(lines):
             img_path = os.path.join(test_img_folder, line.strip())
-            copy_path = os.path.join("WIDER_dataset", "test", "im{}.jpg".format(i + 1))
+            copy_path = os.path.join("WIDER_dataset", "test", "im{}.jpg".format(i))
             shutil.copyfile(img_path, copy_path)
