@@ -60,17 +60,20 @@ def add_dataset(keys, annotations, img_folder, root, split):
         shutil.copyfile(img_path, copy_img_path)
         img = np.array(Image.open(img_path))
         df = annotation_to_df(annotations[key], img.shape)
-        df.to_csv(os.path.join(root, "labels", split, "im{}.txt".format(i)), header=False, index=False, sep='    ')
+        df.to_csv(os.path.join(root, "labels", split, "im{}.txt".format(i)), header=False, index=False, sep=' ')
 
 
 if __name__ == "__main__":
     train_img_folder = "WIDER_train/images/"
     val_img_folder = "WIDER_val/images/"
+    test_img_folder = "WIDER_test/images/"
     ann_folder = "wider_face_split"
     ann_train_file_name = "wider_face_train_bbx_gt.txt"
     ann_val_file_name = "wider_face_val_bbx_gt.txt"
     train_annotations = load_bbx(os.path.join(ann_folder, ann_train_file_name))
     val_annotations = load_bbx(os.path.join(ann_folder, ann_val_file_name))
+    test_list_file = os.path.join(ann_folder, "wider_face_test_filelist.txt")
+
 
     train_keys = []
     val_keys = []
@@ -81,3 +84,14 @@ if __name__ == "__main__":
 
     add_dataset(train_keys, train_annotations, train_img_folder, "WIDER_dataset/", "train")
     add_dataset(val_keys, val_annotations, val_img_folder, "WIDER_dataset/", "val")
+
+    # move test dataset
+    if not os.path.exists(os.path.join("WIDER_dataset", "test")):
+        os.makedirs(os.path.join("WIDER_dataset", "test"))
+
+    with open(test_list_file, mode='r') as file:
+        lines = file.readlines()
+        for i, line in enumerate(lines):
+            img_path = os.path.join(test_img_folder, line.strip())
+            copy_path = os.path.join("WIDER_dataset", "test", "im{}.jpg".format(i + 1))
+            shutil.copyfile(img_path, copy_path)
