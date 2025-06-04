@@ -49,29 +49,46 @@ def annotation_to_df(annotation, img_shape):
 
 
 def add_dataset(keys, annotations, img_folder, root, split):
-    if not os.path.exists(os.path.join(root, "images", split)):
-        os.makedirs(os.path.join(root, "images", split))
-    if not os.path.exists(os.path.join(root, "labels", split)):
-        os.makedirs(os.path.join(root, "labels", split))
+    img_list = "{}.txt".format(split)
+    save_img_list = os.path.join(root, img_list)
 
-    for i, key in enumerate(keys):
-        img_path = os.path.join(img_folder, key)
-        copy_img_path = os.path.join(root, "images", split, "im{}.jpg".format(i))
-        shutil.copyfile(img_path, copy_img_path)
-        img = np.array(Image.open(img_path))
-        df = annotation_to_df(annotations[key], img.shape)
-        df.to_csv(os.path.join(root, "labels", split, "im{}.txt".format(i)), header=False, index=False, sep=' ')
+    # generate folder
+    if not os.path.exists(os.path.join(root, split, "images")):
+        os.makedirs(os.path.join(root, split, "images"))
+
+    if not os.path.exists(os.path.join(root, split, "labels")):
+        os.makedirs(os.path.join(root, split, "labels"))
+
+    with open(save_img_list, mode='w') as fid:
+        for i, key in enumerate(keys):
+            sp = key.split('/')
+            f1 = sp[len(sp) - 1]
+            sp2 = f1.split('.')
+            filename = sp2[0]
+            img_path = os.path.join(img_folder, key)
+            copy_img_path = os.path.join(root, split, "images", "{}.jpg".format(filename))
+            shutil.copyfile(img_path, copy_img_path)
+            img = np.array(Image.open(img_path))
+            df = annotation_to_df(annotations[key], img.shape)
+            df.to_csv(os.path.join(root, split, "labels", "{}.txt".format(filename)), float_format='%.6f',
+                      header=False, index=False, sep=' ')
+            fid.write(os.path.join(split, "images", "{}.jpg".format(filename)) + "\n")
 
 
 if __name__ == "__main__":
+    # folder
     train_img_folder = "WIDER_train/images/"
     val_img_folder = "WIDER_val/images/"
     test_img_folder = "WIDER_test/images/"
     ann_folder = "wider_face_split"
+
+    # annotation name
     ann_train_file_name = "wider_face_train_bbx_gt.txt"
     ann_val_file_name = "wider_face_val_bbx_gt.txt"
     train_annotations = load_bbx(os.path.join(ann_folder, ann_train_file_name))
     val_annotations = load_bbx(os.path.join(ann_folder, ann_val_file_name))
+
+    # test file name
     test_list_file = os.path.join(ann_folder, "wider_face_test_filelist.txt")
 
     train_keys = []
@@ -81,16 +98,26 @@ if __name__ == "__main__":
     for key in val_annotations.keys():
         val_keys.append(key)
 
-    add_dataset(train_keys, train_annotations, train_img_folder, "WIDER_dataset/", "train")
-    add_dataset(val_keys, val_annotations, val_img_folder, "WIDER_dataset/", "val")
+    # add_dataset(train_keys, train_annotations, train_img_folder, "WIDER_dataset", "train")
+    # add_dataset(val_keys, val_annotations, val_img_folder, "WIDER_dataset", "val")
 
     # move test dataset
-    if not os.path.exists(os.path.join("WIDER_dataset", "test")):
-        os.makedirs(os.path.join("WIDER_dataset", "test"))
+    if not os.path.exists(os.path.join("WIDER_dataset", "test", "images")):
+        os.makedirs(os.path.join("WIDER_dataset", "test", "images"))
 
-    with open(test_list_file, mode='r') as file:
-        lines = file.readlines()
-        for i, line in enumerate(lines):
-            img_path = os.path.join(test_img_folder, line.strip())
-            copy_path = os.path.join("WIDER_dataset", "test", "im{}.jpg".format(i))
-            shutil.copyfile(img_path, copy_path)
+    img_list = "{}.txt".format("test")
+    save_img_list = os.path.join("WIDER_dataset", img_list)
+
+    with open(save_img_list, mode='w') as fid:
+        with open(test_list_file, mode='r') as file:
+            lines = file.readlines()
+            for i, line in enumerate(lines):
+                sp = line.split('/')
+                f1 = sp[len(sp) - 1]
+                sp2 = f1.split('.')
+                filename = sp2[0]
+
+                img_path = os.path.join(test_img_folder, line.strip())
+                copy_path = os.path.join("WIDER_dataset", "test", "images", "{}.jpg".format(filename))
+                shutil.copyfile(img_path, copy_path)
+                fid.write(os.path.join("test", "images", "{}.jpg".format(filename)) + "\n")
